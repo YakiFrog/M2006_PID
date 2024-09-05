@@ -12,6 +12,7 @@ float target_speed[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 float target_torque[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 int16_t calc_current_data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+int16_t calc_torque_data[8] = {0, 0, 0, 0, 0, 0, 0, 0}; // デバッグ用
 int8_t send_current_data1[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int8_t send_current_data2[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -96,9 +97,11 @@ void make_current_data(int16_t current_data_in[8], int8_t current_data_out1[8], 
 void task1(void *args) {
     while (1) {
         #ifdef DEBUG_MODE
+        calc_torque_data[0] = calc_current_data[0] * Kt / 1000;
         Serial.println(">target_speed[0]: " + String(target_speed[0]));
         Serial.println(">target_torque[0]: " + String(target_torque[0]));
         Serial.println(">calc_current_data[0]: " + String(calc_current_data[0]));
+        Serial.println(">calc_torque_data[0]: " + String(calc_torque_data[0]));
         Serial.println(">m_rpm[0]: " + String(m_rpm[0]));
         Serial.println(">m_torque[0]: " + String(m_torque[0]));
         Serial.println(">m_degree[0]: " + String(m_degree[0]));

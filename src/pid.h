@@ -10,7 +10,7 @@ public:
     PIDController(float kp, float ki, float kd) : kp_(kp), ki_(ki), kd_(kd), error_sum_(0), prev_error_(0) {}
 
     float calculate(float setpoint, float current_value, float dt) {
-        float error = setpoint - current_value; 
+        float error = setpoint - current_value; // 偏差
         error_sum_ += error * dt; // 積分
         float error_diff = (error - prev_error_) / dt; // 微分
         prev_error_ = error;
