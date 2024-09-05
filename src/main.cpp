@@ -20,8 +20,8 @@ float dt = 0;
 float prev_time = 0;
 float Kt = 0.18 * 1000; // トルク定数[Nm/mA]
 
-float Kp_speed = 60; // BEST: 60
-float Ki_speed = 0;
+float Kp_speed = 100; // BEST: 60
+float Ki_speed = 200;
 float Kd_speed = 0;
 
 float Kp_torque = Kp_speed * 2.5;
@@ -29,7 +29,8 @@ float Ki_torque = Ki_speed * 2.5;
 float Kd_torque = Kd_speed * 2.5;
 
 TaskHandle_t thp[3]; // 3つのタスクを作成
-PIDController pid_speed(Kp_speed, Ki_speed, Kd_speed);
+PIDController pid_speed_P(Kp_speed, 0, Kd_speed);
+PIDController pid_speed_I(0, Ki_speed, Kd_speed);
 PIDController pid_torque(Kp_torque, Ki_torque, Kd_torque);
 CANWrapper can_wrapper;
 
@@ -62,8 +63,10 @@ void loop() {
     dt = (millis() - prev_time) / 1000.0; // [s]
     prev_time = millis();
 
+    // I-P制御
     for (int i = 0; i < 8; i++) {
-        target_torque[i] = (float)pid_speed.calculate(target_speed[i], m_rpm[i], dt);
+        target_torque[i] = (float)pid_speed_I.calculate(target_speed[i], m_rpm[i], dt);
+        target_torque[i] -= m_rpm[i] * Kp_speed;
         target_torque[i] = target_torque[i] * (1.0 / Kt);
     }
 
@@ -97,11 +100,9 @@ void make_current_data(int16_t current_data_in[8], int8_t current_data_out1[8], 
 void task1(void *args) {
     while (1) {
         #ifdef DEBUG_MODE
-        calc_torque_data[0] = calc_current_data[0] * Kt / 1000;
         Serial.println(">target_speed[0]: " + String(target_speed[0]));
         Serial.println(">target_torque[0]: " + String(target_torque[0]));
         Serial.println(">calc_current_data[0]: " + String(calc_current_data[0]));
-        Serial.println(">calc_torque_data[0]: " + String(calc_torque_data[0]));
         Serial.println(">m_rpm[0]: " + String(m_rpm[0]));
         Serial.println(">m_torque[0]: " + String(m_torque[0]));
         Serial.println(">m_degree[0]: " + String(m_degree[0]));
@@ -133,8 +134,9 @@ void task2(void *args) {
             Ki_torque = Ki_speed * 3;
             Kd_torque = Kd_speed * 3;
 
-            pid_speed.set_gain(Kp_speed, Ki_speed, Kd_speed);
-            pid_torque.set_gain(Kp_torque, Ki_torque, Kd_torque);
+            pid_speed_P.set_gain(Kp_speed, 0, Kd_speed);
+            pid_speed_I.set_gain(0, Ki_speed, Kd_speed);
+            pid_torque.set_gain(100, 0, Kd_torque);
         }
         #endif
         delay(100);
